@@ -2,6 +2,7 @@ import os
 import click
 import numpy as np
 from math import isclose
+import inspect
 
 import torch
 from torchvision import datasets, transforms
@@ -17,6 +18,27 @@ TRANSFORM_CLASSES: dict[str, Transformation] = {
     'rotation': Rotation,
     'translation': Translation,
 }
+
+def load_dataset(name: str, data_dir: str, to_tensor: transforms.Compose):
+    """Dynamically load a torchvision dataset.
+
+    Parameters are inferred based on the dataset constructor signature. The
+    dataset must be available in ``torchvision.datasets``.
+    """
+    dataset_cls = getattr(datasets, name, None)
+    if dataset_cls is None:
+        raise ValueError(f"Unsupported dataset: {name}")
+
+    kwargs = {"root": data_dir, "transform": to_tensor}
+    sig = inspect.signature(dataset_cls)
+    if "download" in sig.parameters:
+        kwargs["download"] = True
+    if "train" in sig.parameters:
+        kwargs["train"] = True
+    if "split" in sig.parameters:
+        kwargs["split"] = "train"
+
+    return dataset_cls(**kwargs)
 
 def get_kwargs(transformation: TransformationConfig):
     if isinstance(transformation, TranslationConfig):
@@ -46,12 +68,7 @@ def generate(config):
     
     # Load dataset
     to_tensor = transforms.ToTensor()
-    if config.dataset == 'MNIST':
-        dataset = datasets.MNIST(root=config.data_dir, train=True, download=True, transform=to_tensor)
-    elif config.dataset == 'CIFAR10':
-        dataset = datasets.CIFAR10(root=config.data_dir, train=True, download=True, transform=to_tensor)
-    else:
-        raise ValueError(f"Unsupported dataset: {config.dataset}")
+    dataset = load_dataset(config.dataset, config.data_dir, to_tensor)
 
     # Generate splits
     num_samples = len(dataset)
