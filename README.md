@@ -34,16 +34,26 @@ All transformations retain the original class label.
 
 You can customize the dataset generation with three parameters:
 
-1. **Transformations**  
-   A list of transformation types to apply.  
+1. **Transformations** – A list of transformation types to apply.
    _Example:_ `["Rotation", "TranslationH", "TranslationV"]`
 
-2. **Parameters**  
-   Dictionary specifying parameters for each transformation.  
-   _Example:_  
+2. **Parameters** – Dictionary specifying parameters for each transformation.
+   _Example:_
    ```python
    {
        "Rotation": {"angle_range": [0, 360], "step": 15},
        "TranslationH": {"shift_px": [-5, 5]},
        "TranslationV": {"shift_px": [-5, 5]}
    }
+   ```
+
+3. **Dataset** – Provide the name of any dataset available in
+   `torchvision.datasets` (e.g., `MNIST`, `CIFAR10`, `ImageFolder`). For custom
+   folders use `ImageFolder` and set `data_dir` to your dataset root.
+
+With these options defined in a YAML config file you can run:
+
+```bash
+python -m src.cli -c path/to/config.yaml
+```
+
