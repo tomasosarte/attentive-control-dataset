@@ -1,6 +1,7 @@
 import os
 import yaml
 import click
+import numpy as np
 from math import isclose
 
 import torch
@@ -47,6 +48,22 @@ def generate(config):
         dataset = datasets.CIFAR10(root=config.data_dir, train=True, download=True, transform=to_tensor)
     else:
         raise ValueError(f"Unsupported dataset: {config.dataset}")
+
+    # Generate splits
+    num_samples = len(dataset)
+    indices = np.random.permutation(num_samples)  
+    proportion_sizes = [int(p * num_samples) for p in config.proportions]
+    proportion_sizes[-1] = num_samples - sum(proportion_sizes[:-1])  
+
+    splits = []
+    start = 0
+    for size in proportion_sizes:
+        end = start + size
+        splits.append(indices[start:end])
+        start = end
+    
+    # Create subsets
+    subsets = [Subset(dataset, split) for split in splits]
 
 if __name__ == '__main__':
     generate()

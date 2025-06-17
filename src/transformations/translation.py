@@ -3,7 +3,9 @@ from torchvision.transforms.v2.functional import affine
 from src.transformations.invariance import Transformation
 
 class Translation(Transformation):
-    def apply(self, image: torch.Tensor, translate: tuple[float, float]):
+
+    @staticmethod
+    def apply(image: torch.Tensor, translate: tuple[float, float]):
         super().apply(image)  # Check shape
 
         dx, dy = translate
