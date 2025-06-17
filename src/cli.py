@@ -1,5 +1,4 @@
 import os
-import yaml
 import click
 import numpy as np
 from math import isclose
@@ -8,22 +7,16 @@ import torch
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader, Subset
 
-from src.transformations.rotation import Rotation
-from src.transformations.translation import Translation
-from src.transformations.transformation import Transformation
+from transformations.rotation import Rotation
+from transformations.translation import Translation
+from transformations.transformation import Transformation
 
-from config.config_classes import Config, TransformationConfig, RotationConfig, TranslationConfig
+from config.config_classes import Config, TransformationConfig, RotationConfig, TranslationConfig, load_config
 
 TRANSFORM_CLASSES: dict[str, Transformation] = {
     'rotation': Rotation,
     'translation': Translation,
 }
-
-def load_config(path: str) -> Config:
-    with open(path, "r") as f:
-        data = yaml.safe_load(f)
-    return Config(**data)
-
 
 def get_kwargs(transformation: TransformationConfig):
     if isinstance(transformation, TranslationConfig):
@@ -44,8 +37,9 @@ def generate(config):
     if len(config.proportions) != len(config.transformations):
         raise ValueError(f"Proportions should be a least of the same length as the transformations")
     
-    if isclose(sum(config.proportions), 1.0, rel_tol=1e-9):
-        raise ValueError(f"Proportions should add up to 1.0")
+    sum_prop = sum(config.proportions)
+    if not isclose(sum_prop, 1.0, rel_tol=1e-6):
+        raise ValueError(f"Proportions should add up to 1.0 and add up to: {sum_prop}")
     
     # Make dirs
     os.makedirs(config.output_dir, exist_ok=True)
@@ -89,8 +83,7 @@ def generate(config):
     # Apply transformations to each subset
     for subset, transform_config in zip(subsets, config.transformations):
         loader = DataLoader(subset, batch_size=64, shuffle=False)
-
-        transform_name = transform_config.__class__.__name__.replace("Config", "").lower()
+        transform_name = transform_config.type
         transform_cls = TRANSFORM_CLASSES[transform_name]
         kwargs = get_kwargs(transform_config)
 

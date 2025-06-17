@@ -1,12 +1,14 @@
 import torch
 from torchvision.transforms.v2.functional import affine
-from src.transformations.transformation import Transformation
+from transformations.transformation import Transformation
 
 class Translation(Transformation):
 
     @staticmethod
     def apply(images: torch.Tensor, translate: tuple[float, float]):
-        super().apply(images)  # Check shape
+
+        if len(images.shape) != 4:
+            raise ValueError(f"Expected image with 4 dimensions (B, C, H, W), got {images.shape}")
 
         dx, dy = translate
         return torch.stack([
