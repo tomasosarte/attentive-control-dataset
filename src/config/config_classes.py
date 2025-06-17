@@ -5,14 +5,24 @@ from pydantic import BaseModel, Field
 class TransformationConfig(BaseModel):
     type: str
 
+    def to_kwargs(self) -> dict:
+        """Return keyword arguments for the transformation apply method."""
+        return self.model_dump(exclude={"type"})
+
 class RotationConfig(TransformationConfig):
     type: Literal["rotation"]
     angle: float = Field(..., description="Rotation angle in degrees")
+
+    def to_kwargs(self) -> dict:
+        return {"rot_angle": self.angle}
 
 class TranslationConfig(TransformationConfig):
     type: Literal["translation"]
     x: int = Field(..., description="Horizontal shift")
     y: int = Field(..., description="Vertical shift")
+
+    def to_kwargs(self) -> dict:
+        return {"translate": (self.x, self.y)}
 
 TransformationUnion = Annotated[
     Union[RotationConfig, TranslationConfig],

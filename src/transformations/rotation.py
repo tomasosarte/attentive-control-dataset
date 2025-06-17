@@ -1,8 +1,10 @@
 import torch
 from torchvision.transforms.v2.functional import rotate
 
-from transformations.transformation import Transformation
+from . import register_transformation
+from .transformation import Transformation
 
+@register_transformation("rotation")
 class Rotation(Transformation):
     
     @staticmethod

@@ -8,16 +8,10 @@ import torch
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader, Subset
 
-from transformations.rotation import Rotation
-from transformations.translation import Translation
-from transformations.transformation import Transformation
+from transformations import TRANSFORMATIONS
 
-from config.config_classes import Config, TransformationConfig, RotationConfig, TranslationConfig, load_config
+from config.config_classes import Config, TransformationConfig, load_config
 
-TRANSFORM_CLASSES: dict[str, Transformation] = {
-    'rotation': Rotation,
-    'translation': Translation,
-}
 
 def load_dataset(name: str, data_dir: str, to_tensor: transforms.Compose):
     """Dynamically load a torchvision dataset.
@@ -40,13 +34,9 @@ def load_dataset(name: str, data_dir: str, to_tensor: transforms.Compose):
 
     return dataset_cls(**kwargs)
 
-def get_kwargs(transformation: TransformationConfig):
-    if isinstance(transformation, TranslationConfig):
-        return {'translate': (transformation.x, transformation.y)}
-    elif isinstance(transformation, RotationConfig):
-        return {'rot_angle': transformation.angle}
-    else:
-        raise ValueError(f"Unknown transformation type: {transformation}")
+def get_kwargs(transformation: TransformationConfig) -> dict:
+    """Convert a transformation configuration to kwargs."""
+    return transformation.to_kwargs()
 
 @click.command()
 @click.option('-c', '--config', type=click.Path(exists=True), required=True, help='Path to the YAML configuration file.')
@@ -101,7 +91,7 @@ def generate(config):
     for subset, transform_config in zip(subsets, config.transformations):
         loader = DataLoader(subset, batch_size=64, shuffle=False)
         transform_name = transform_config.type
-        transform_cls = TRANSFORM_CLASSES[transform_name]
+        transform_cls = TRANSFORMATIONS[transform_name]
         kwargs = get_kwargs(transform_config)
 
         # Apply batched transformation

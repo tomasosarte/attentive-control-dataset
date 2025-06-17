@@ -63,6 +63,17 @@ This will:
 - Apply the transformations as configured,
 - Save the transformed dataset in the specified output directory.
 
+## 🛠️ Adding New Transformations
+
+1. Create a new module in `src/transformations/` and implement a class
+   inheriting from `Transformation`.
+2. Decorate the class with `@register_transformation("your_name")`.
+3. Optionally create a corresponding configuration class extending
+   `TransformationConfig` and override `to_kwargs()` to map config fields to the
+   arguments expected by the transformation.
+4. Use the new transformation in your YAML configuration by referencing its
+   registered name under `type`.
+
 ## 📚 Reference
 
 If you use this tool or build on it, please cite:
