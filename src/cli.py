@@ -79,6 +79,7 @@ def generate(config):
     # Containers for final dataset
     all_images = []
     all_labels = []
+    transform_metadata = []
 
     # Add original dataset
     if config.include_original:
@@ -86,6 +87,7 @@ def generate(config):
         for batch_images, batch_labels in full_loader:
             all_images.append(batch_images)
             all_labels.append(batch_labels)
+            transform_metadata.extend([{'type': 'original', 'params': {}} for _ in range(batch_images.size(0))])
 
     # Apply transformations to each subset
     for subset, transform_config in zip(subsets, config.transformations):
@@ -99,6 +101,7 @@ def generate(config):
             transformed_batch = transform_cls.apply(batch_images, **kwargs)
             all_images.append(transformed_batch)
             all_labels.append(batch_labels)
+            transform_metadata.extend([{'type': transform_name, 'params': kwargs} for _ in range(batch_images.size(0))])
 
     # Final concatenation
     all_images_tensor = torch.cat(all_images, dim=0)
@@ -109,6 +112,7 @@ def generate(config):
     torch.save({
         'images': all_images_tensor,
         'labels': all_labels_tensor,
+        'metadata': transform_metadata
     }, output_path)
 
     print(f"Saved augmented dataset with {len(all_images_tensor)} samples to {output_path}")
